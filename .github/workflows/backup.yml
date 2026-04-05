@@ -7,7 +7,7 @@ on:
 
 jobs:
   backup:
-    uses: ericcarnold/franklin-infra/.github/workflows/backup.yml@main
+    uses: 314clay/franklin-infra/.github/workflows/backup.yml@main
     with:
       project_name: my-project    # ← edit these
       db_name: my_database
