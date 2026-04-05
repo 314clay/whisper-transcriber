@@ -1,0 +1,7 @@
+project:
+  name: whisper-transcriber
+  port: "3100"
+  health_endpoint: /api/state
+  health_url: http://100.112.120.2:3100/api/state
+  deploy_path: ~/whisper-transcriber
+  runtime: python

@@ -1,0 +1,29 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  ci-cd:
+    uses: ericcarnold/franklin-infra/.github/workflows/ci-cd.yml@main
+    with:
+      project_name: my-project        # ← edit these
+      db_name: my_database
+      port: "3099"
+      health_endpoint: /api/state
+      health_url: https://myproject.claypersonalprojects.cc/api/state
+      test_command: python test_app.py
+      deploy_path: ~/my-project
+      runtime: python
+      schema_file: schema.sql         # ← remove this line to use migrations instead
+    secrets:
+      TS_OAUTH_CLIENT_ID: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+      TS_OAUTH_SECRET: ${{ secrets.TS_OAUTH_SECRET }}
+      FRANKLIN_SSH_KEY: ${{ secrets.FRANKLIN_SSH_KEY }}
+      NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}

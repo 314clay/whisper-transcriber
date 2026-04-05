@@ -1,0 +1,12 @@
+services:
+  whisper-transcriber:
+    build: .
+    container_name: whisper-transcriber
+    restart: unless-stopped
+    ports:
+      - "${PORT:-3100}:${PORT:-3100}"
+    environment:
+      - PORT=${PORT:-3100}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    volumes:
+      - ./transcripts:/app/transcripts
