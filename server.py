@@ -261,6 +261,31 @@ async def list_sessions():
     }
 
 
+@app.get("/api/topology")
+async def topology():
+    """Report this service's upstream connections and downstream listeners."""
+    upstreams = []
+    for sid, info in sessions.items():
+        upstreams.append({
+            "session_id": sid,
+            "upstream_url": info.get("ws_url"),
+            "upstream_type": "ws",
+            "status": info.get("status"),
+        })
+
+    downstreams = {}
+    for sid, listeners in sse_listeners.items():
+        downstreams[sid] = len(listeners)
+
+    return {
+        "service": "whisper-transcriber",
+        "url": f"http://localhost:{PORT}",
+        "upstreams": upstreams,
+        "downstreams": downstreams,
+        "active_sessions": len([u for u in upstreams if u["status"] == "connected"]),
+    }
+
+
 @app.get("/api/transcript/{session_id}")
 async def get_transcript(session_id: str):
     """Get all transcription segments for a session."""
