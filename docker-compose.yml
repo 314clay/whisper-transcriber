@@ -6,6 +6,8 @@ services:
     network_mode: host
     environment:
       - PORT=${PORT:-3100}
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - WHISPER_API_URL=${WHISPER_API_URL:-http://100.127.103.23:30800/v1/audio/transcriptions}
+      - WHISPER_MODEL=${WHISPER_MODEL:-Systran/faster-whisper-large-v3}
     volumes:
       - ./transcripts:/app/transcripts

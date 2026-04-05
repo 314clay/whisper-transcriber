@@ -24,6 +24,10 @@ from fastapi.responses import JSONResponse, StreamingResponse
 
 PORT = int(os.environ.get("PORT", "3100"))
 OPENAI_API_KEY = os.environ.get("OPENAI_API_KEY", "")
+WHISPER_API_URL = os.environ.get(
+    "WHISPER_API_URL", "http://100.127.103.23:30800/v1/audio/transcriptions"
+)
+WHISPER_MODEL = os.environ.get("WHISPER_MODEL", "Systran/faster-whisper-large-v3")
 CHUNK_INTERVAL = float(os.environ.get("CHUNK_INTERVAL", "5"))  # seconds between transcriptions
 TRANSCRIPT_DIR = Path(os.environ.get("TRANSCRIPT_DIR", "transcripts"))
 START_TIME = time.time()
@@ -58,19 +62,19 @@ async def broadcast_transcript(session_id: str, segment: dict):
 # --- Whisper ---
 
 async def transcribe_audio(audio_bytes: bytes, mime_type: str = "audio/webm") -> str | None:
-    """Send audio to OpenAI Whisper API and return transcription text."""
-    if not OPENAI_API_KEY:
-        log.error("No OPENAI_API_KEY set")
-        return None
-
+    """Send audio to Whisper API (local GPU or OpenAI) and return transcription text."""
     ext = "webm" if "webm" in mime_type else "mp4" if "mp4" in mime_type else "ogg"
 
-    async with httpx.AsyncClient(timeout=30) as client:
+    headers = {}
+    if OPENAI_API_KEY and "openai.com" in WHISPER_API_URL:
+        headers["Authorization"] = f"Bearer {OPENAI_API_KEY}"
+
+    async with httpx.AsyncClient(timeout=60) as client:
         resp = await client.post(
-            "https://api.openai.com/v1/audio/transcriptions",
-            headers={"Authorization": f"Bearer {OPENAI_API_KEY}"},
+            WHISPER_API_URL,
+            headers=headers,
             files={"file": (f"audio.{ext}", audio_bytes, mime_type)},
-            data={"model": "whisper-1", "response_format": "json"},
+            data={"model": WHISPER_MODEL, "response_format": "json"},
         )
 
     if resp.status_code != 200:

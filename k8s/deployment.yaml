@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: faster-whisper-server
+  namespace: whisper
+  labels:
+    app: faster-whisper-server
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: faster-whisper-server
+  template:
+    metadata:
+      labels:
+        app: faster-whisper-server
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: trevor
+      tolerations:
+        - key: "heavy-gpu"
+          operator: "Equal"
+          value: "true"
+          effect: "NoSchedule"
+      containers:
+        - name: faster-whisper-server
+          image: ghcr.io/speaches-ai/speaches:latest-cuda
+          ports:
+            - containerPort: 8000
+          env:
+            - name: WHISPER__INFERENCE_DEVICE
+              value: cuda
+            - name: WHISPER__COMPUTE_TYPE
+              value: float16
+            - name: PRELOAD_MODELS
+              value: '["Systran/faster-whisper-large-v3"]'
+            - name: STT_MODEL_TTL
+              value: "-1"
+          resources:
+            requests:
+              memory: "4Gi"
+              cpu: "1"
+            limits:
+              nvidia.com/gpu: 1
+              memory: "8Gi"
+              cpu: "4"
+          volumeMounts:
+            - name: model-cache
+              mountPath: /home/ubuntu/.cache/huggingface
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 60
+            periodSeconds: 30
+      volumes:
+        - name: model-cache
+          hostPath:
+            path: /opt/whisper-models
+            type: DirectoryOrCreate
